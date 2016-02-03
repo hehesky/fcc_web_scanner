@@ -20,13 +20,12 @@ using MyWebScan;
 2.(x)setup threads for scanner
 3.(x)setup scanner event(s), hook them up with subscribers
 
-4.code notification icon and setup minimization event
-5.(x)hook up UI event
-    1)buttons
-    2)listBox
-    3)LinkLabel
-6.Fix title regex (if possible and needed)
-7.Test everything together
+4.(x)code notification icon and setup minimization event
+5.code remaining ui coms
+    -(x)Sort buttons
+    -Current ID display
+6.(-x, partially fixed)Fix title regex 
+7.Test
 */
 namespace fcc_web_scanner
 {
@@ -58,7 +57,12 @@ namespace fcc_web_scanner
             ResumeButton.Click += On_Resume_Button_Clicked;
             StopButton.Click += On_Stop_Button_Clicked;
             PauseButton.Click += On_Pause_Button_Clicked;
+            JumpButton.Click += On_Jump_Button_Clicked;
+            SortByIDButton.Click += On_Sort_By_ID_Button_Clicked;
+            SortByDateButton.Click += On_Sort_By_Publication_Date_Clicked;
 
+            Resize += On_Form_Resize;
+            traynotifyIcon.Click += On_Tray_Icon_Clicked;
             //entry_manager.Data_Bank_Change += On_Entry_Manager_Changed;
 
             ///hook up scanner-entryManager events
@@ -83,9 +87,6 @@ namespace fcc_web_scanner
                 ScannerStatusLabel.Text = "Standing by";
             }
 
-            
-        
-           
         }
 
         private void Entry_manager_FE_Being_Processed(object sender, StatusBarDrawItemEventArgs sbdevent)
@@ -106,9 +107,10 @@ namespace fcc_web_scanner
 
         private void update_listbox()
         {
-            EntryListBox.Items.Clear();
+            
             if (entry_list == null)
                 return;
+            EntryListBox.Items.Clear();
             foreach (FutureEntry fe in entry_list)
             {
                 
@@ -172,7 +174,10 @@ namespace fcc_web_scanner
             
 
         }
-
+        private void On_Form_Resize(object sender, EventArgs e)
+        {
+            Hide();
+        }
         ///Backend-triggered event handlers
         private void On_Entry_Manager_Changed(object sender,EventArgs args)
         {
@@ -190,6 +195,19 @@ namespace fcc_web_scanner
             ScannerStatusLabel.Text = "Done Scanning";
         }
         ///UI components-triggered event handlers
+        ///
+        private void On_Sort_By_ID_Button_Clicked(object sender, EventArgs e)
+        {
+            entry_list.Sort(FutureEntry.CompareByID);
+            update_listbox();
+        }
+        private void On_Sort_By_Publication_Date_Clicked(object sender,EventArgs e)
+        {
+            entry_list.Sort(FutureEntry.CompareByPublicationDate);
+            entry_list.Reverse();
+            update_listbox();
+        }
+
         private void On_Pause_Button_Clicked(object sender, EventArgs args)
         {
             scanner.KeepScanning = false;
@@ -232,6 +250,23 @@ namespace fcc_web_scanner
             string url = "https://apps.fcc.gov/oetcf/kdb/forms/FTSSearchResultPage.cfm?id=" + IDTextBox.Text + "&switch=P";
             Process.Start(url);
         }
+        private void On_Jump_Button_Clicked(object sender,EventArgs e)
+        {
+            scanner.KeepScanning = false;
+            if(scannerThread!=null && scannerThread.IsAlive==true)
+            {
+                scannerThread.Join(100);
+            }
+            scanner.Current_id = decimal.ToInt32(JumpIDNumericInput.Value);
+            ScannerStatusLabel.Text = "Scanner Paused and jumped to " + scanner.Current_id.ToString();
+        }
+        private void On_Tray_Icon_Clicked(object sender, EventArgs e)
+        {
+            Show();
+            if (this.WindowState == FormWindowState.Minimized)
+                this.WindowState = FormWindowState.Normal;
+        }
+
         #endregion
         private delegate void form_control_delegate();
         private delegate void status_bar_update_delegate(FutureEntry arg);

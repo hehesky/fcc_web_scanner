@@ -61,6 +61,19 @@ namespace MyWebScan //it's just a name
             else
                 return 0;
         }
+        static public int CompareByPublicationDate(FutureEntry x, FutureEntry y)
+        {
+            if (x.publication_date < y.publication_date)
+            {
+                return -1;
+            }
+            else if (x.publication_date > y.publication_date)
+            {
+                return 1;
+            }
+            else
+                return 0;
+        }
         /// <summary>
         /// convert FE object into string; shows id and title
         /// </summary>
@@ -152,9 +165,9 @@ namespace MyWebScan //it's just a name
 
             ret = new Regex("<DIV[^>]*>").Replace(ret, "");
             ret = new Regex("<P[^>]*>").Replace(ret, "");
+            ret = new Regex("^\\s+").Replace(ret, "");
 
-
-            return ret.Substring(1);
+            return ret;
         }
         public void do_full_scan(object s_id)
         {
