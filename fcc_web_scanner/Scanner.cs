@@ -156,6 +156,8 @@ namespace MyWebScan //it's just a name
             
             
             ret = ret.Replace("</DIV>", "");
+            ret = ret.Replace("</div>", "");
+            ret = ret.Replace("</p>", "");
             ret = ret.Replace("</P>", "");
             Regex left_span_regex = new Regex("<SPAN[^>]*>");
             Regex right_span_regex = new Regex("</SPAN>");
@@ -164,9 +166,12 @@ namespace MyWebScan //it's just a name
             ret = right_span_regex.Replace(ret, "");
 
             ret = new Regex("<DIV[^>]*>").Replace(ret, "");
-            ret = new Regex("<P[^>]*>").Replace(ret, "");
+            ret = new Regex("<div[^>]*>").Replace(ret, "");
+            ret = new Regex("<span[^>]*>").Replace(ret, "");
+            ret = new Regex("</span>").Replace(ret, "");
+            ret = new Regex("<[pP][^>]*>").Replace(ret, "");
             ret = new Regex("^\\s+").Replace(ret, "");
-
+            ret = ret.Replace(Environment.NewLine, " ");
             return ret;
         }
         public void do_full_scan(object s_id)
@@ -179,11 +184,12 @@ namespace MyWebScan //it's just a name
                 Current_id = min_id;
             else
                 Current_id = starting_id;
-
+            
             while (KeepScanning && Current_id <=max_id)
             {
                 scan_by_id(Current_id);
-                Current_id += 1;                
+                Current_id += 1;
+                Scanner_Current_ID_Auto_Change(this, new EventArgs());
             }
             if(Current_id>max_id)
             {
@@ -196,7 +202,18 @@ namespace MyWebScan //it's just a name
         {
             client.Headers.Add("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)"); //set headers
             string url = "https://apps.fcc.gov/oetcf/kdb/forms/FTSSearchResultPage.cfm?id=" + id.ToString() + "&switch=P";
-            Stream data = client.OpenRead(url);
+            Stream data;
+            try {
+                data = client.OpenRead(url);
+            }
+            catch(WebException we)
+            {
+                KeepScanning=false;
+                Connection_Error_Event(this, new EventArgs());
+
+                MessageBox.Show("Error accessing fcc webpage.Please check Internet Connection and try again. Error Message:" + we.Message);
+                return;
+            }
             StreamReader reader = new StreamReader(data);
             string html = reader.ReadToEnd();
             reader.Close();
@@ -257,7 +274,7 @@ namespace MyWebScan //it's just a name
         private int max_id;
         private WebClient client;
         static private string date_search_pattern = @"Publication Date.+(\d\d).+(\d\d).+(\d\d\d\d)";
-        static private string title_search_pattern = @"<TD> <B> Question: <\/B>(.*)<\/TD>";
+        static private string title_search_pattern = @"<TD> <B> Question: <\/B>((.|\n)*?)<\/TD>";
         static private Regex date_regex = new Regex(date_search_pattern);
         static private Regex title_regex = new Regex(title_search_pattern);
         static public string DumpDir = "scanner_state.txt";

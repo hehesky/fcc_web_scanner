@@ -52,6 +52,10 @@
             this.StopButton = new System.Windows.Forms.Button();
             this.traynotifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.panel1 = new System.Windows.Forms.Panel();
+            this.EntryCountTextBox = new System.Windows.Forms.TextBox();
+            this.EntryCountLabel = new System.Windows.Forms.Label();
+            this.ForceUpdateCheckBox = new System.Windows.Forms.CheckBox();
+            this.EntryButtonsLabel = new System.Windows.Forms.Label();
             this.CurrentIDTextBox = new System.Windows.Forms.TextBox();
             this.CurrentIDLabel = new System.Windows.Forms.Label();
             this.JumpPanel = new System.Windows.Forms.Panel();
@@ -72,14 +76,16 @@
             // 
             this.EntryListBox.FormattingEnabled = true;
             this.EntryListBox.ItemHeight = 16;
-            this.EntryListBox.Location = new System.Drawing.Point(12, 9);
+            this.EntryListBox.Location = new System.Drawing.Point(3, 9);
             this.EntryListBox.Name = "EntryListBox";
             this.EntryListBox.ScrollAlwaysVisible = true;
-            this.EntryListBox.Size = new System.Drawing.Size(233, 276);
+            this.EntryListBox.Size = new System.Drawing.Size(242, 276);
             this.EntryListBox.TabIndex = 0;
             // 
             // RightHalfPanel
             // 
+            this.RightHalfPanel.AutoSize = true;
+            this.RightHalfPanel.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.RightHalfPanel.Controls.Add(this.LinkLabel);
             this.RightHalfPanel.Controls.Add(this.TitleTextBox);
             this.RightHalfPanel.Controls.Add(this.ScanDateTextBox);
@@ -89,16 +95,17 @@
             this.RightHalfPanel.Controls.Add(this.PublicationDateLabel);
             this.RightHalfPanel.Controls.Add(this.IDTextBox);
             this.RightHalfPanel.Controls.Add(this.IDLabel);
-            this.RightHalfPanel.Location = new System.Drawing.Point(248, 12);
+            this.RightHalfPanel.Location = new System.Drawing.Point(245, 12);
             this.RightHalfPanel.Name = "RightHalfPanel";
-            this.RightHalfPanel.Size = new System.Drawing.Size(362, 234);
+            this.RightHalfPanel.Size = new System.Drawing.Size(416, 237);
             this.RightHalfPanel.TabIndex = 1;
+            this.RightHalfPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.RightHalfPanel_Paint);
             // 
             // LinkLabel
             // 
             this.LinkLabel.AutoSize = true;
             this.LinkLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.LinkLabel.Location = new System.Drawing.Point(23, 196);
+            this.LinkLabel.Location = new System.Drawing.Point(28, 198);
             this.LinkLabel.Name = "LinkLabel";
             this.LinkLabel.Size = new System.Drawing.Size(120, 17);
             this.LinkLabel.TabIndex = 6;
@@ -109,10 +116,12 @@
             // TitleTextBox
             // 
             this.TitleTextBox.BackColor = System.Drawing.SystemColors.ControlLightLight;
-            this.TitleTextBox.Location = new System.Drawing.Point(150, 148);
+            this.TitleTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.TitleTextBox.Location = new System.Drawing.Point(150, 153);
             this.TitleTextBox.Multiline = true;
             this.TitleTextBox.Name = "TitleTextBox";
-            this.TitleTextBox.Size = new System.Drawing.Size(209, 86);
+            this.TitleTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.TitleTextBox.Size = new System.Drawing.Size(263, 81);
             this.TitleTextBox.TabIndex = 5;
             // 
             // ScanDateTextBox
@@ -139,9 +148,9 @@
             this.TitleLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.TitleLabel.Location = new System.Drawing.Point(31, 153);
             this.TitleLabel.Name = "TitleLabel";
-            this.TitleLabel.Size = new System.Drawing.Size(35, 18);
+            this.TitleLabel.Size = new System.Drawing.Size(76, 18);
             this.TitleLabel.TabIndex = 4;
-            this.TitleLabel.Text = "Title";
+            this.TitleLabel.Text = "Title/Topic";
             // 
             // ScanDateLabel
             // 
@@ -189,18 +198,21 @@
             this.ScannerStatusLabel});
             this.statusStrip1.Location = new System.Drawing.Point(0, 531);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(655, 25);
+            this.statusStrip1.Size = new System.Drawing.Size(670, 25);
             this.statusStrip1.TabIndex = 2;
             this.statusStrip1.Text = "statusStrip1";
             // 
             // ScannerStatusLabel
             // 
+            this.ScannerStatusLabel.BackColor = System.Drawing.SystemColors.Control;
             this.ScannerStatusLabel.Name = "ScannerStatusLabel";
             this.ScannerStatusLabel.Size = new System.Drawing.Size(49, 20);
             this.ScannerStatusLabel.Text = "Status";
             // 
             // PauseButton
             // 
+            this.PauseButton.Image = ((System.Drawing.Image)(resources.GetObject("PauseButton.Image")));
+            this.PauseButton.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.PauseButton.Location = new System.Drawing.Point(460, 85);
             this.PauseButton.Name = "PauseButton";
             this.PauseButton.Size = new System.Drawing.Size(183, 28);
@@ -210,9 +222,10 @@
             // 
             // ResumeButton
             // 
-            this.ResumeButton.Location = new System.Drawing.Point(460, 25);
+            this.ResumeButton.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.ResumeButton.Location = new System.Drawing.Point(460, 33);
             this.ResumeButton.Name = "ResumeButton";
-            this.ResumeButton.Size = new System.Drawing.Size(183, 29);
+            this.ResumeButton.Size = new System.Drawing.Size(183, 28);
             this.ResumeButton.TabIndex = 4;
             this.ResumeButton.Text = "Start/Resume Scanning";
             this.ResumeButton.UseVisualStyleBackColor = true;
@@ -254,7 +267,7 @@
             this.updatePanel.Controls.Add(this.RecentChangeLabel);
             this.updatePanel.Location = new System.Drawing.Point(248, 252);
             this.updatePanel.Name = "updatePanel";
-            this.updatePanel.Size = new System.Drawing.Size(395, 30);
+            this.updatePanel.Size = new System.Drawing.Size(410, 30);
             this.updatePanel.TabIndex = 8;
             this.updatePanel.Paint += new System.Windows.Forms.PaintEventHandler(this.updatePanel_Paint);
             // 
@@ -278,6 +291,10 @@
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.EntryCountTextBox);
+            this.panel1.Controls.Add(this.EntryCountLabel);
+            this.panel1.Controls.Add(this.ForceUpdateCheckBox);
+            this.panel1.Controls.Add(this.EntryButtonsLabel);
             this.panel1.Controls.Add(this.CurrentIDTextBox);
             this.panel1.Controls.Add(this.CurrentIDLabel);
             this.panel1.Controls.Add(this.JumpPanel);
@@ -291,8 +308,47 @@
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.panel1.Location = new System.Drawing.Point(0, 291);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(655, 240);
+            this.panel1.Size = new System.Drawing.Size(670, 240);
             this.panel1.TabIndex = 10;
+            // 
+            // EntryCountTextBox
+            // 
+            this.EntryCountTextBox.BackColor = System.Drawing.SystemColors.ControlLightLight;
+            this.EntryCountTextBox.Location = new System.Drawing.Point(112, 210);
+            this.EntryCountTextBox.Name = "EntryCountTextBox";
+            this.EntryCountTextBox.ReadOnly = true;
+            this.EntryCountTextBox.Size = new System.Drawing.Size(48, 22);
+            this.EntryCountTextBox.TabIndex = 19;
+            this.EntryCountTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // EntryCountLabel
+            // 
+            this.EntryCountLabel.AutoSize = true;
+            this.EntryCountLabel.Location = new System.Drawing.Point(13, 210);
+            this.EntryCountLabel.Name = "EntryCountLabel";
+            this.EntryCountLabel.Size = new System.Drawing.Size(92, 17);
+            this.EntryCountLabel.TabIndex = 18;
+            this.EntryCountLabel.Text = "Total Entries:";
+            // 
+            // ForceUpdateCheckBox
+            // 
+            this.ForceUpdateCheckBox.AutoSize = true;
+            this.ForceUpdateCheckBox.Location = new System.Drawing.Point(16, 181);
+            this.ForceUpdateCheckBox.Name = "ForceUpdateCheckBox";
+            this.ForceUpdateCheckBox.Size = new System.Drawing.Size(337, 21);
+            this.ForceUpdateCheckBox.TabIndex = 17;
+            this.ForceUpdateCheckBox.Text = "update the entry list even if it is NOT a new entry";
+            this.ForceUpdateCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // EntryButtonsLabel
+            // 
+            this.EntryButtonsLabel.AutoSize = true;
+            this.EntryButtonsLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.EntryButtonsLabel.Location = new System.Drawing.Point(13, 0);
+            this.EntryButtonsLabel.Name = "EntryButtonsLabel";
+            this.EntryButtonsLabel.Size = new System.Drawing.Size(147, 18);
+            this.EntryButtonsLabel.TabIndex = 16;
+            this.EntryButtonsLabel.Text = "Entry Display Control";
             // 
             // CurrentIDTextBox
             // 
@@ -341,7 +397,7 @@
             this.JumpIDNumericInput.Size = new System.Drawing.Size(77, 22);
             this.JumpIDNumericInput.TabIndex = 14;
             this.JumpIDNumericInput.Value = new decimal(new int[] {
-            20000,
+            10000,
             0,
             0,
             0});
@@ -349,7 +405,7 @@
             // JumpButton
             // 
             this.JumpButton.FlatAppearance.BorderColor = System.Drawing.Color.Black;
-            this.JumpButton.Location = new System.Drawing.Point(29, 69);
+            this.JumpButton.Location = new System.Drawing.Point(77, 80);
             this.JumpButton.Name = "JumpButton";
             this.JumpButton.Size = new System.Drawing.Size(122, 28);
             this.JumpButton.TabIndex = 12;
@@ -360,7 +416,7 @@
             // 
             this.JumpIDLabel.AutoSize = true;
             this.JumpIDLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.JumpIDLabel.Location = new System.Drawing.Point(26, 10);
+            this.JumpIDLabel.Location = new System.Drawing.Point(11, 9);
             this.JumpIDLabel.Name = "JumpIDLabel";
             this.JumpIDLabel.Size = new System.Drawing.Size(95, 18);
             this.JumpIDLabel.TabIndex = 11;
@@ -389,13 +445,14 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.ClientSize = new System.Drawing.Size(655, 556);
+            this.ClientSize = new System.Drawing.Size(670, 556);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.updatePanel);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.RightHalfPanel);
             this.Controls.Add(this.EntryListBox);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MinimumSize = new System.Drawing.Size(670, 600);
             this.Name = "MainForm";
             this.Text = "FCC Web Scanner";
             this.RightHalfPanel.ResumeLayout(false);
@@ -446,6 +503,10 @@
         private System.Windows.Forms.NumericUpDown JumpIDNumericInput;
         private System.Windows.Forms.TextBox CurrentIDTextBox;
         private System.Windows.Forms.Label CurrentIDLabel;
+        private System.Windows.Forms.Label EntryButtonsLabel;
+        private System.Windows.Forms.CheckBox ForceUpdateCheckBox;
+        private System.Windows.Forms.TextBox EntryCountTextBox;
+        private System.Windows.Forms.Label EntryCountLabel;
     }
 }
 

@@ -25,7 +25,7 @@ using MyWebScan;
     -(x)Sort buttons
     -Current ID display
 6.(-x, partially fixed)Fix title regex 
-7.Test
+7.set up scanner network error event
 */
 namespace fcc_web_scanner
 {
@@ -41,13 +41,13 @@ namespace fcc_web_scanner
 
 
             ///create backend objects
-            scanner = new Scanner(20000, 60000);
+            scanner = new Scanner(10000, 60000);
             entry_manager = new EntryManager();
             entry_list = entry_manager.ExportAsList();
             update_listbox();
 
 
-            bool recovered= scanner.RecoverLastScan();
+            bool recovered = scanner.RecoverLastScan();
             ///hook up form events
 
             LinkLabel.Click += On_Linklabel_Clicked;
@@ -60,6 +60,7 @@ namespace fcc_web_scanner
             JumpButton.Click += On_Jump_Button_Clicked;
             SortByIDButton.Click += On_Sort_By_ID_Button_Clicked;
             SortByDateButton.Click += On_Sort_By_Publication_Date_Clicked;
+            ForceUpdateCheckBox.CheckedChanged += On_Force_Update_Checkbox_Changed;
 
             Resize += On_Form_Resize;
             traynotifyIcon.Click += On_Tray_Icon_Clicked;
@@ -70,9 +71,11 @@ namespace fcc_web_scanner
             entry_manager.FE_Being_Processed += On_Scanner_Found_FE ;
             scanner.Found_Future_Entry_Event += entry_manager.On_Found_Future_Entry;
             scanner.Done_Scanning += On_Scanner_Done_Scanning;
-
+            scanner.Scanner_Current_ID_Auto_Change += On_Scanner_Current_ID_Changed;
+            scanner.Connection_Error_Event += On_Scanner_Connection_Error;
             ///wait for UI interaction
-            ///
+            CurrentIDTextBox.Text = scanner.Current_id.ToString();
+            EntryCountTextBox.Text = entry_list.Count.ToString();
             string recover_msg;
             recover_msg = "Recovered Last Scan at id" + scanner.Current_id.ToString() + "\nDo you wish to continue this scan?";
             if (recovered && MessageBox.Show(recover_msg,"Restore",MessageBoxButtons.YesNo)==DialogResult.Yes)
@@ -110,6 +113,7 @@ namespace fcc_web_scanner
             
             if (entry_list == null)
                 return;
+            int pre_selected_index = EntryListBox.SelectedIndex;//remember the index selected
             EntryListBox.Items.Clear();
             foreach (FutureEntry fe in entry_list)
             {
@@ -119,6 +123,14 @@ namespace fcc_web_scanner
                     fe.title = "!FE!" + fe.title;
                 }
                 EntryListBox.Items.Add(fe);
+            }
+            try
+            {
+                EntryListBox.SelectedIndex = pre_selected_index;
+            }
+            catch
+            {
+                EntryListBox.SelectedIndex = -1;
             }
         }
 
@@ -142,6 +154,10 @@ namespace fcc_web_scanner
             TitleTextBox.Text = entry_list[EntryListBox.SelectedIndex].title.ToString();
             
         }
+        private void update_current_id_textbox()
+        {
+            CurrentIDTextBox.Text = scanner.Current_id.ToString();
+        }
         private void update_status_bar(FutureEntry arg)
         {
             RecentChangeLabel.Text = arg.ToString();
@@ -151,6 +167,11 @@ namespace fcc_web_scanner
         {
             entry_list = entry_manager.ExportAsList();
             update_listbox();
+            EntryCountTextBox.Text = entry_list.Count.ToString();
+        }
+        private void handle_connection_error()
+        {
+            ScannerStatusLabel.Text = "Scanner Paused; Error connecting to FCC website";
         }
         #endregion
         #region UI event handlers
@@ -176,7 +197,15 @@ namespace fcc_web_scanner
         }
         private void On_Form_Resize(object sender, EventArgs e)
         {
-            Hide();
+            if (WindowState == FormWindowState.Minimized)
+            {
+                Hide();
+                traynotifyIcon.ShowBalloonTip(500);
+            }
+            else
+            {
+                Show();
+            }
         }
         ///Backend-triggered event handlers
         private void On_Entry_Manager_Changed(object sender,EventArgs args)
@@ -226,6 +255,7 @@ namespace fcc_web_scanner
                 scannerThread.Join(100);
             scanner.Current_id = scanner.MinID;
             ScannerStatusLabel.Text = "Scanner reset";
+            CurrentIDTextBox.Text = scanner.Current_id.ToString();
 
         }
         private void On_Refresh_Button_Clicked(object sender, EventArgs args)
@@ -259,6 +289,7 @@ namespace fcc_web_scanner
             }
             scanner.Current_id = decimal.ToInt32(JumpIDNumericInput.Value);
             ScannerStatusLabel.Text = "Scanner Paused and jumped to " + scanner.Current_id.ToString();
+            CurrentIDTextBox.Text = scanner.Current_id.ToString();
         }
         private void On_Tray_Icon_Clicked(object sender, EventArgs e)
         {
@@ -266,7 +297,18 @@ namespace fcc_web_scanner
             if (this.WindowState == FormWindowState.Minimized)
                 this.WindowState = FormWindowState.Normal;
         }
-
+        private void On_Scanner_Current_ID_Changed(object sender,EventArgs e)
+        {
+            Invoke(new form_control_delegate(update_current_id_textbox));
+        }
+        private void On_Scanner_Connection_Error(object sender,EventArgs e)
+        {
+            Invoke(new form_control_delegate(handle_connection_error));
+        }
+        private void On_Force_Update_Checkbox_Changed(object sender,EventArgs e)
+        {
+            entry_manager.ForceUpdate = ForceUpdateCheckBox.Checked;
+        }
         #endregion
         private delegate void form_control_delegate();
         private delegate void status_bar_update_delegate(FutureEntry arg);
@@ -283,6 +325,11 @@ namespace fcc_web_scanner
         {
 
         }
+
+        private void RightHalfPanel_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
     }
     /// <summary>
     /// maintains a dictionary of 'future entries' found; initialize the dictionary on start up with datafile(databank.txt); updates datafile if the dictionary changes;
@@ -294,6 +341,7 @@ namespace fcc_web_scanner
         
         public EntryManager()
         {
+            ForceUpdate = false;
             databank = new Dictionary<int, FutureEntry>();
             if(File.Exists(data_file_dir)== true)
             {
@@ -309,6 +357,14 @@ namespace fcc_web_scanner
                         DateTime f_date = new DateTime(int.Parse(segs[1]), int.Parse(segs[2]), int.Parse(segs[3]));
                         DateTime p_date = new DateTime(int.Parse(segs[4]), int.Parse(segs[5]), int.Parse(segs[6]));
                         string title = segs[7];
+                        if(segs.Length>8)
+                        {
+                            for(int i=8;i<segs.Length;i++)
+                            {
+                                title += ",";
+                                title += segs[i];
+                            }
+                        }
                         databank[id] = new FutureEntry(f_date, p_date, id, title);
                     }
                     catch
@@ -328,10 +384,10 @@ namespace fcc_web_scanner
         }
 
         #region methods
-        //assuming this method is not called during initialization
+        //assuming this method is not called during initialization as it raises Data_Bank_Change event
         public void AddEntry(FutureEntry fe)
         {
-            if(true)//isNewerEntry(fe))
+            if(ForceUpdate||isNewerEntry(fe))
             {
                 databank[fe.id] = fe;
                 Data_Bank_Change(this,new EventArgs());
@@ -426,6 +482,8 @@ namespace fcc_web_scanner
         private static string data_file_dir = "databank.txt";
         private static char[] delimeter = { ',' };
 
+        public bool ForceUpdate
+        { get; set; }
         private bool databank_modified
         {
             get; set;
@@ -444,5 +502,7 @@ namespace MyWebScan
         //expose following event(s) to MainForm and EntryManager
         public event FEFoundEventHandler Found_Future_Entry_Event;
         public event EventHandler Done_Scanning;
+        public event EventHandler Scanner_Current_ID_Auto_Change;
+        public event EventHandler Connection_Error_Event;
     }
 }
